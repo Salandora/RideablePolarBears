@@ -1,0 +1,183 @@
+apply plugin: libs.plugins.shadow.get().getPluginId()
+apply plugin: libs.plugins.minotaur.get().getPluginId()
+apply plugin: libs.plugins.cursegradle.get().getPluginId()
+
+evaluationDependsOn(":common")
+
+architectury {
+    injectInjectables = false
+    platformSetupLoomIde()
+    forge()
+}
+
+loom {
+    runtimeOnlyLog4j = true
+
+    if (project(":common").loom.accessWidenerPath.getOrNull() != null && project(":common").loom.accessWidenerPath.asFile.get().exists()) {
+        accessWidenerPath.set(project(":common").loom.accessWidenerPath)
+    }
+
+    forge {
+        convertAccessWideners = true
+        if (accessWidenerPath.getOrNull() != null && accessWidenerPath.asFile.get().exists()) {
+            extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+        }
+
+        mixinConfig "${mod_id}.common.mixins.json"
+        // mixinConfig "${mod_id}.mixins.json"
+    }
+
+    runs {
+        client {
+            client()
+            setConfigName("Forge Client")
+        }
+        server {
+            server()
+            setConfigName("Forge Server")
+        }
+
+        configureEach {
+            runDir "../run/${it.configName.replace(' ', '_')}"
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+}
+
+dependencies {
+    forge libs.forge
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
+}
+
+processResources {
+    def expandProps = [
+            "version"                 : version,
+
+            "mod_id"                  : mod_id,
+            "mod_name"                : mod_name,
+            "mod_description"         : mod_description,
+
+            "minecraft_version"       : libs.versions.minecraft.get(),
+            "minecraft_version_range" : libs.versions.mc.range.get(),
+
+            "forge_version_range"     : libs.versions.forge.range.get()
+    ]
+
+    inputs.properties(expandProps)
+
+    filesMatching(['META-INF/mods.toml', '*.mixins.json']) {
+        expand expandProps
+    }
+}
+
+shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    exclude "fabric.mod.json"
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier.set("dev-shadow")
+}
+
+remapJar {
+    inputFile.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier.set(null)
+}
+
+jar {
+    archiveClassifier.set("dev")
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+publishing {
+    publications {
+        mavenFabric(MavenPublication) {
+            artifactId = base.archivesName.get()
+            version = project.version
+            artifact(remapJar) {
+                builtBy remapJar
+                classifier ''
+            }
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+    }
+}
+
+modrinth {
+    debugMode = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null
+
+    token = providers.environmentVariable("MODRINTH_TOKEN").getOrElse("")
+
+    projectId = 'rideablepolarbears'
+    versionNumber = version
+    versionName = "${mod_name}-${version}"
+    versionType = 'release'
+    file = remapJar.archiveFile
+    changelog = rootProject.file('CHANGELOG.md').text
+    gameVersions = [libs.versions.minecraft.get()]
+    loaders = ['forge']
+    detectLoaders = false
+
+    dependencies {
+        // A special DSL for creating dependencies
+        // scope.type
+        // The scope can be `required`, `optional`, `incompatible`, or `embedded`
+        // The type can either be `project` or `version`
+    }
+}
+
+curseforge {
+    curseGradleOptions.debug = providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
+
+    apiKey = providers.environmentVariable("CURSEFORGE_TOKEN").getOrElse("invalid")
+
+    curseGradleOptions.javaIntegration = false
+    curseGradleOptions.forgeGradleIntegration = false
+    curseGradleOptions.javaVersionAutoDetect = false
+
+    //noinspection GroovyAssignabilityCheck
+    project {
+        id = '932424'
+        releaseType = 'release'
+        changelogType = 'markdown'
+        changelog = rootProject.file('CHANGELOG.md')
+
+        addGameVersion libs.versions.minecraft.get()
+        addGameVersion 'Forge'
+
+        mainArtifact(remapJar) {
+            displayName = "${mod_name}-${version}"
+        }
+
+        relations {
+        }
+    }
+}

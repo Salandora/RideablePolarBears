@@ -1,0 +1,237 @@
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+
+import org.apache.tools.zip.ZipEntry
+import org.apache.tools.zip.ZipOutputStream
+
+import java.nio.file.Files
+import com.github.jengelman.gradle.plugins.shadow.transformers.Transformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.TransformerContext
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowCopyAction
+import org.codehaus.plexus.util.IOUtil
+
+apply plugin: libs.plugins.shadow.get().getPluginId()
+apply plugin: 'io.papermc.paperweight.userdev'
+
+def serverDir = rootProject.file("run/ignite_purpur")
+def pluginsDir = new File(serverDir, "plugins")
+def modDir = new File(serverDir, "mods")
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "PurpurMC"
+        url = uri("https://repo.purpurmc.org/snapshots")
+    }
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven { url = "https://maven.elmakers.com/repository/" }
+}
+
+configurations {
+    common
+    shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+}
+
+dependencies {
+    paperweight.devBundle("org.purpurmc.purpur", libs.versions.purpur.api.get())
+
+    implementation libs.ignite
+    implementation libs.mixin
+
+    // Add your dependencies here
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "namedElements")) { transitive false }
+}
+
+processResources {
+    def expandProps = [
+            "version"                 : version,
+
+            "mod_id"                  : mod_id,
+            "mod_name"                : mod_name,
+            "mod_description"         : mod_description,
+
+            "minecraft_version"       : libs.versions.minecraft.get(),
+            "minecraft_version_range" : libs.versions.mc.range.get()
+    ]
+
+    inputs.properties(expandProps)
+
+    filesMatching(['ignite.mod.json', '*.mixins.json']) {
+        expand expandProps
+    }
+}
+
+shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    dependsOn(jar)
+
+    exclude "architectury**"
+    exclude "**.refmap.json"
+    exclude "**/client/**"
+
+    transform(MixinJsonTransformer)
+
+    configurations = [project.configurations.getByName("shadowCommon")]
+    archiveClassifier.set('dev-shadow')
+}
+
+reobfJar {
+    inputJar.set(shadowJar.archiveFile)
+    dependsOn shadowJar
+
+    remapperArgs.add("--mixin")
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+
+    exclude "architectury**"
+    exclude "**.refmap.json"
+    exclude "**/client/**"
+
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+tasks {
+    assemble {
+        dependsOn(reobfJar)
+    }
+
+    clean {
+        doLast {
+            modDir.deleteDir()
+        }
+    }
+
+    tasks.register("downloadServer") {
+        group = "purpur"
+        doFirst {
+            serverDir.mkdirs()
+            pluginsDir.mkdirs()
+            modDir.mkdirs()
+            new URL("https://api.purpurmc.org/v2/purpur/${libs.versions.minecraft.get()}/latest/download").openStream().withStream {
+                Files.copy(it, new File(serverDir, "purpur.jar").toPath())
+            }
+        }
+    }
+
+    tasks.register("downloadIgnite") {
+        group = "purpur"
+        doFirst {
+            modDir.mkdirs()
+            new URL("https://github.com/vectrix-space/ignite/releases/download/v0.8.1/ignite-launcher.jar").openStream().withStream {
+                Files.copy(it, new File(serverDir, "ignite-launcher.jar").toPath())
+            }
+        }
+    }
+
+    tasks.register("copyMod") {
+        group = "purpur"
+        doFirst {
+            new File(modDir, "${base.archivesName.get()}.jar").delete()
+        }
+
+        dependsOn(reobfJar)
+
+        doLast {
+            modDir.mkdirs()
+            Files.copy(layout.buildDirectory.file("libs/${base.archivesName.get()}-${version}.jar").get().asFile.toPath(), new File(modDir, "${base.archivesName.get()}.jar").toPath())
+        }
+    }
+
+    tasks.register("runIgniteServer", JavaExec) {
+        group = "purpur"
+
+        if (!new File(serverDir, "purpur.jar").exists()) {
+            dependsOn("downloadServer")
+        }
+        if (!new File(serverDir, "ignite-launcher.jar").exists()) {
+            dependsOn("downloadIgnite")
+        }
+
+        dependsOn('copyMod')
+
+        classpath = files(new File(serverDir, "ignite-launcher.jar"))
+        jvmArgs = [
+            "-Dignite.service=paper",
+            "-Dignite.jar=./versions/${libs.versions.minecraft.get()}/purpur-${libs.versions.minecraft.get()}.jar",
+            "-Dignite.paper.jar=./purpur.jar",
+            "-Dignite.paper.minecraft=${libs.versions.minecraft.get()}",
+            "-Dignite.paper.override=false",
+            "-Dcom.mojang.eula.agree=true"
+        ]
+        args = [
+    //        "--nogui"
+        ]
+        workingDir = serverDir
+        standardInput = System.in
+    }
+}
+
+class MixinJsonTransformer implements Transformer {
+    private Map<String, String> jsonObjects = [:]
+
+    private final PatternSet patternSet = new PatternSet().include("*.mixins.json")
+
+    @Override
+    boolean canTransformResource(FileTreeElement element) {
+        FileTreeElement target = element instanceof ShadowCopyAction.ArchiveFileTreeElement ? element.asFileTreeElement() : element
+        return patternSet.asSpec.isSatisfiedBy(target)
+    }
+
+    @Override
+    void transform(TransformerContext context) {
+        Object jsonContent
+        try {
+            def bis = new BufferedInputStream(context.is) {
+                void close() throws IOException {
+                    // leave ZIP open
+                }
+            }
+            jsonContent = new JsonSlurper().parse(bis)
+        } catch (Exception e) {
+            throw (IOException) new IOException("Error parsing components.xml in " + context.is).initCause(e)
+        }
+
+        jsonContent.remove("client")
+        jsonContent.compatibilityLevel = "JAVA_16"
+
+        jsonObjects[context.path] = new JsonBuilder(jsonContent).toPrettyString()
+    }
+
+    @Override
+    boolean hasTransformedResource() {
+        return jsonObjects.size() > 0
+    }
+
+    @Override
+    void modifyOutputStream(ZipOutputStream os, boolean preserveFileTimestamps) {
+        jsonObjects.each { String path, String data ->
+            ZipEntry entry = new ZipEntry(path)
+            entry.time = TransformerContext.getEntryTimestamp(preserveFileTimestamps, entry.time)
+            os.putNextEntry(entry)
+            IOUtil.copy(data, os)
+            os.closeEntry()
+        }
+    }
+}

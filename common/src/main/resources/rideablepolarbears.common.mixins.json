@@ -1,0 +1,16 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.github.salandora.rideablepolarbears.mixins",
+    "compatibilityLevel": "JAVA_17",
+    "mixins": [
+        "PolarBearAttackPlayersGoalMixin",
+        "PolarBearsMixin"
+    ],
+    "client": [
+        "client.PolarBearModelMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

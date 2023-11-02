@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "${group}",
+    "id": "${mod_id}",
+    "version": "${version}",
+    "metadata": {
+      "name": "${mod_name}",
+      "description": "${mod_description}",
+      "contributors": {
+        "Salandora": "Owner"
+      },
+      "contact": {
+        "homepage": "https://github.com/Salandora/RideablePolarBears",
+        "issues": "https://github.com/Salandora/RideablePolarBears/issues",
+        "source": "https://github.com/Salandora/RideablePolarBears"
+      },
+      "license": "AGPL-3.0",
+      "icon": "assets/${mod_id}/icon.png"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": "com.github.salandora.${mod_id}.RideablePolarBearsMod"
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=${quilt_loader_version}"
+      },
+      {
+        "id": "minecraft",
+        "versions": ">=${minecraft_version}"
+      },
+      {
+        "id": "java",
+        "versions": ">=17"
+      }
+    ]
+  },
+  "mixin": [
+    "${mod_id}.common.mixins.json"
+  ]
+}

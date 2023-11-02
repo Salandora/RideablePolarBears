@@ -1,0 +1,49 @@
+name: Build
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java: [ 17 ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-java-${{ matrix.java }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-java-${{ matrix.java }}-gradle-
+
+      - name: Setup JDK${{ matrix.java}}
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - uses: gradle/wrapper-validation-action@v1
+
+      - name: Set execute permission
+        if: ${{ env.ACT }}
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew build --stacktrace --warning-mode=fail -Porg.gradle.parallel.threads=4
+
+      - name: Upload Artifacts
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Artifacts
+          path: |
+            fabric/build/libs/
+            forge/build/libs/
+            ignite_purpur/build/libs/

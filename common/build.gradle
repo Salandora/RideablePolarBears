@@ -1,0 +1,54 @@
+architectury {
+    injectInjectables = false
+    common(rootProject.enabled_platforms.split(","))
+}
+
+loom {
+    if(file("src/main/resources/${mod_id}.accesswidener").exists()) {
+        accessWidenerPath.set(file("src/main/resources/${mod_id}.accesswidener"))
+    }
+
+    mixin {
+        defaultRefmapName = "${mod_id}.${project.name}.refmap.json"
+    }
+}
+
+dependencies {
+    // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
+    // Do NOT use other classes from fabric loader
+    modImplementation libs.fabric.loader
+}
+
+processResources {
+    def expandProps = [
+            "version"                 : version,
+
+            "mod_id"                  : mod_id,
+            "mod_name"                : mod_name,
+            "mod_description"         : mod_description,
+
+            "minecraft_version"       : libs.versions.minecraft.get(),
+
+            "fabric_loader_version"   : libs.versions.fabric.loader.get(),
+    ]
+
+    inputs.properties(expandProps)
+
+    filesMatching(['pack.mcmeta']) {
+        expand expandProps
+    }
+}
+
+publishing {
+    publications {
+        mavenCommon(MavenPublication) {
+            artifactId = base.archivesName.get()
+            from components.java
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+    }
+}

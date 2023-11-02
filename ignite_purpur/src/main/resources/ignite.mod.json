@@ -1,0 +1,24 @@
+{
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${version}",
+
+    "name": "${mod_name}",
+    "description": "${mod_description}",
+    "authors": [
+        "Salandora"
+    ],
+    "contact": {},
+
+    "license": "GNU-AGPL-3.0",
+    "icon": "assets/${mod_id}/icon.png",
+    "entry": "com.github.salandora.${mod_id}.RideablePolarBearsMod",
+
+    "mixins": [
+        "rideablepolarbears.common.mixins.json"
+    ],
+
+    "dependencies": [
+        "ignite"
+    ]
+}

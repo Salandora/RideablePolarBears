@@ -1,0 +1,197 @@
+apply plugin: libs.plugins.shadow.get().getPluginId()
+apply plugin: libs.plugins.minotaur.get().getPluginId()
+apply plugin: libs.plugins.cursegradle.get().getPluginId()
+
+evaluationDependsOn(":common")
+
+// Make a collection of all api modules we wish to use
+Set<String> runtimeOnlyApiModules = [
+        "fabric-networking-api-v1"
+]
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+repositories {
+    maven { url = "https://maven.terraformersmc.com/releases/" } // Mod Menu
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+
+loom {
+    runtimeOnlyLog4j = true
+
+    if (project(":common").loom.accessWidenerPath.getOrNull() != null && project(":common").loom.accessWidenerPath.asFile.get().exists()) {
+        accessWidenerPath.set(project(":common").loom.accessWidenerPath)
+    }
+
+    runs {
+        client {
+            client()
+            setConfigName("Fabric Client")
+        }
+        server {
+            server()
+            setConfigName("Fabric Server")
+        }
+
+        configureEach {
+            runDir "../run/${it.configName.replace(' ', '_')}"
+        }
+    }
+}
+
+configurations {
+    common
+    shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+}
+
+dependencies {
+    modImplementation libs.fabric.loader
+
+    // Development QoL
+    modLocalRuntime libs.modmenu
+    modLocalRuntime libs.replaymod
+    modLocalRuntime libs.malilib
+    modLocalRuntime libs.tweakeroo
+
+    runtimeOnlyApiModules.forEach {
+        modLocalRuntime(fabricApi.module(it, libs.versions.fabric.apiVersion.get()))
+    }
+
+    // Dependencies
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+}
+
+processResources {
+    def expandProps = [
+            "version"                 : version,
+
+            "mod_id"                  : mod_id,
+            "mod_name"                : mod_name,
+            "mod_description"         : mod_description,
+
+            "minecraft_version"       : libs.versions.minecraft.get(),
+
+            "fabric_loader_version"   : libs.versions.fabric.loader.get(),
+    ]
+
+    inputs.properties(expandProps)
+
+    filesMatching(['fabric.mod.json', '*.mixins.json']) {
+        expand expandProps
+    }
+}
+
+shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier.set('dev-shadow')
+}
+
+remapJar {
+    injectAccessWidener = true
+    inputFile.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier.set(null)
+}
+
+jar {
+    archiveClassifier.set('dev')
+}
+
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+publishing {
+    publications {
+        mavenFabric(MavenPublication) {
+            artifactId = base.archivesName.get()
+            version = project.version
+            artifact(remapJar) {
+                builtBy remapJar
+                classifier ''
+            }
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+    }
+}
+
+modrinth {
+    debugMode = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null
+
+    token = providers.environmentVariable("MODRINTH_TOKEN").getOrElse("")
+
+    projectId = 'rideablepolarbears'
+    versionNumber = version
+    versionName = "${mod_name}-${version}"
+    versionType = 'release'
+    file = remapJar.archiveFile
+    changelog = rootProject.file('CHANGELOG.md').text
+    gameVersions = [libs.versions.minecraft.get()]
+    loaders = ['fabric']
+    detectLoaders = false
+
+    dependencies {
+        // A special DSL for creating dependencies
+        // scope.type
+        // The scope can be `required`, `optional`, `incompatible`, or `embedded`
+        // The type can either be `project` or `version`
+    }
+}
+
+curseforge {
+    curseGradleOptions.debug = providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
+
+    apiKey = providers.environmentVariable("CURSEFORGE_TOKEN").getOrElse("")
+
+    curseGradleOptions.javaIntegration = false
+    curseGradleOptions.forgeGradleIntegration = false
+    curseGradleOptions.javaVersionAutoDetect = false
+
+    //noinspection GroovyAssignabilityCheck
+    project {
+        id = '932424'
+        releaseType = 'release'
+        changelogType = 'markdown'
+        changelog = rootProject.file('CHANGELOG.md')
+
+        addGameVersion libs.versions.minecraft.get()
+        addGameVersion 'Fabric'
+
+        mainArtifact(remapJar) {
+            displayName = "${mod_name}-${version}"
+        }
+
+        relations {
+        }
+    }
+}
