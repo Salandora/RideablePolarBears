@@ -96,6 +96,18 @@ jobs:
           asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-forge.jar
           asset_content_type: application/java-archive
 
+      - name: Upload NeoForged Release Asset
+        if: ${{ !env.ACT }}
+        id: upload_forge_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./neoforged/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar
+          asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar
+          asset_content_type: application/java-archive
+
       - name: Upload Ignite Release Asset
         if: ${{ !env.ACT }}
         id: upload_ignite_release_asset
