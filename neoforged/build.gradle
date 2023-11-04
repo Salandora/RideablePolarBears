@@ -153,12 +153,12 @@ modrinth {
     loaders = ['neoforge']
     detectLoaders = false
 
-    dependencies {
+    /*dependencies {
         // A special DSL for creating dependencies
         // scope.type
         // The scope can be `required`, `optional`, `incompatible`, or `embedded`
         // The type can either be `project` or `version`
-    }
+    }*/
 }
 
 curseforge {
@@ -184,7 +184,7 @@ curseforge {
             displayName = "${mod_name}-${version}"
         }
 
-        relations {
-        }
+        /*relations {
+        }*/
     }
 }
