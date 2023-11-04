@@ -63,72 +63,15 @@ jobs:
       - name: Create Release
         if: ${{ !env.ACT }}
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1.13.0
         with:
-          tag_name: ${{ steps.composite_version.outputs.composite_version }}
-          release_name: ${{ steps.mod_name.outputs.mod_name }} ${{ steps.composite_version.outputs.composite_version }}
-          body_path: CHANGELOG.md
+          tag: ${{ steps.composite_version.outputs.composite_version }}
+          name: ${{ steps.mod_name.outputs.mod_name }} ${{ steps.composite_version.outputs.composite_version }}
+          bodyFile: CHANGELOG.md
           draft: false
           prerelease: false
-
-      - name: Upload Fabric Release Asset
-        if: ${{ !env.ACT }}
-        id: upload_fabric_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./fabric/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-fabric.jar
-          asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-fabric.jar
-          asset_content_type: application/java-archive
-
-      - name: Upload Forge Release Asset
-        if: ${{ !env.ACT }}
-        id: upload_forge_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./forge/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-forge.jar
-          asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-forge.jar
-          asset_content_type: application/java-archive
-
-      - name: Upload NeoForged Release Asset
-        if: ${{ !env.ACT }}
-        id: upload_neoforged_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./neoforged/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar
-          asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar
-          asset_content_type: application/java-archive
-
-      - name: Upload Ignite Release Asset
-        if: ${{ !env.ACT }}
-        id: upload_ignite_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./ignite_purpur/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-ignite_purpur.jar
-          asset_name: ${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-ignite_purpur.jar
-          asset_content_type: application/java-archive
-
-      - name: Upload Ignite Datapack Asset
-        if: ${{ !env.ACT }}
-        id: upload_ignite_datapack_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./assets/${{ steps.mod_name.outputs.mod_name }}-ignite_purpur-datapack.zip
-          asset_name: ${{ steps.mod_name.outputs.mod_name }}-ignite_purpur-datapack.zip
-          asset_content_type: application/java-archive
+          artifacts: "fabric/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-fabric.jar,
+            forge/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-forge.jar,
+            neoforged/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar,
+            ignite_purpur/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-ignite_purpur.jar,
+            assets/${{ steps.mod_name.outputs.mod_name }}-ignite_purpur-datapack.zip"
