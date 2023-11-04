@@ -56,6 +56,7 @@ jobs:
         if: ${{ !env.ACT }}
         env:
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           RELEASE: true
         run: ./gradlew build publish curseforge modrinth
 
