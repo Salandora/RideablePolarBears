@@ -1,4 +1,6 @@
-<center><img src="https://i.imgur.com/91uG3sl.png" width="230" height="92" alt="RideablePolarBears" title ="RideablePolarBears"></center>
+<p align="center">
+    <img src="https://i.imgur.com/91uG3sl.png" width="230" height="92" alt="RideablePolarBears" title ="RideablePolarBears">
+</p>
 
 This mod allows you to tame and breed Polar Bears with fish. Just don't try it if they have a baby around them. 
 After you tamed one you can attach a saddle to it and ride it.
