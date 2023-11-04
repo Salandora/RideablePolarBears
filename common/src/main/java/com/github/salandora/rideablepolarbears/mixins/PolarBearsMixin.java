@@ -421,11 +421,12 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 			float g = Mth.cos(this.yBodyRot * (float) (Math.PI / 180.0));
 			float h = (0.8F / 6.0F) * this.clientSideStandAnimationO;
 			float i = -(0.5F / 6.0F) * this.clientSideStandAnimationO;
+			Vec3 vec3 = this.getPassengerRidingPosition(entity);
 			moveFunction.accept(
 					entity,
-					this.getX() + (double)(h * f),
-					this.getY() + this.getPassengersRidingOffset() + entity.getMyRidingOffset() + (double)i,
-					this.getZ() - (double)(h * g)
+					vec3.x + (double)(h * f),
+					vec3.y + entity.getMyRidingOffset(this) + (double)i,
+					vec3.z - (double)(h * g)
 			);
 			if (entity instanceof LivingEntity) {
 				((LivingEntity)entity).yBodyRot = this.yBodyRot;
