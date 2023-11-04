@@ -11,7 +11,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowCopyAction
 import org.codehaus.plexus.util.IOUtil
 
 apply plugin: libs.plugins.shadow.get().getPluginId()
-apply plugin: 'io.papermc.paperweight.userdev'
+apply plugin: libs.plugins.paperweight.userdev.get().getPluginId()
 
 def serverDir = rootProject.file("run/ignite_purpur")
 def pluginsDir = new File(serverDir, "plugins")
