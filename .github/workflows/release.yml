@@ -99,7 +99,7 @@ jobs:
 
       - name: Upload NeoForged Release Asset
         if: ${{ !env.ACT }}
-        id: upload_forge_release_asset
+        id: upload_neoforged_release_asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
