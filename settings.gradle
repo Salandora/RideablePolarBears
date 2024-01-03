@@ -29,8 +29,8 @@ rootProject.name = "RideablePolarBears"
 include("common")
 include("fabric")
 include("forge")
-include("neoforged")
+//include("neoforged")
 //include("quilt")
-include("ignite_purpur")
+//include("ignite_purpur")
 
 //include("common", "fabric", "neoforged", "quilt", "ignite_purpur", "purpur_plugin")

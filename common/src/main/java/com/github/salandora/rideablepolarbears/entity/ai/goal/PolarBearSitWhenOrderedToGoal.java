@@ -1,6 +1,8 @@
 package com.github.salandora.rideablepolarbears.entity.ai.goal;
 
 import com.github.salandora.rideablepolarbears.entity.Tamable;
+
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.PolarBear;
@@ -28,16 +30,15 @@ public class PolarBearSitWhenOrderedToGoal extends Goal {
 			return false;
 		} else if (this.bear.isInWaterOrBubble()) {
 			return false;
-		} else if (!this.bear.onGround()) {
+		} else if (!this.bear.isOnGround()) {
 			return false;
 		} else {
-			LivingEntity livingEntity = this.mob.getOwner();
-			if (livingEntity == null) {
-				return true;
-			} else {
+			Entity entity = this.mob.getOwner();
+			if (entity instanceof LivingEntity livingEntity) {
 				return (this.bear.distanceToSqr(livingEntity) >= 144.0 || livingEntity.getLastHurtByMob() == null) && this.mob.rideablePolarBears$isOrderedToSit();
 			}
 		}
+		return false;
 	}
 
 	@Override

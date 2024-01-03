@@ -1,6 +1,8 @@
 package com.github.salandora.rideablepolarbears.entity.ai.goal;
 
 import com.github.salandora.rideablepolarbears.entity.Tamable;
+
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
@@ -23,26 +25,23 @@ public class PolarBearOwnerHurtTargetGoal extends TargetGoal {
 	@Override
 	public boolean canUse() {
 		if (this.tameAnimal.rideablePolarBears$isTame() && !this.tameAnimal.rideablePolarBears$isOrderedToSit()) {
-			LivingEntity livingEntity = this.tameAnimal.getOwner();
-			if (livingEntity == null) {
-				return false;
-			} else {
+			Entity entity = this.tameAnimal.getOwner();
+			if (entity instanceof LivingEntity livingEntity) {
 				this.ownerLastHurt = livingEntity.getLastHurtMob();
 				int i = livingEntity.getLastHurtMobTimestamp();
 				return i != this.timestamp
 						&& this.canAttack(this.ownerLastHurt, TargetingConditions.DEFAULT)
 						&& this.tameAnimal.rideablePolarBears$wantsToAttack(this.ownerLastHurt, livingEntity);
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	@Override
 	public void start() {
 		this.mob.setTarget(this.ownerLastHurt);
-		LivingEntity livingEntity = this.tameAnimal.getOwner();
-		if (livingEntity != null) {
+		Entity entity = this.tameAnimal.getOwner();
+		if (entity instanceof LivingEntity livingEntity) {
 			this.timestamp = livingEntity.getLastHurtMobTimestamp();
 		}
 

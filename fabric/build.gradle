@@ -59,10 +59,10 @@ dependencies {
     modImplementation libs.fabric.loader
 
     // Development QoL
-    modLocalRuntime libs.modmenu
+    /*modLocalRuntime libs.modmenu
     modLocalRuntime libs.replaymod
     modLocalRuntime libs.malilib
-    modLocalRuntime libs.tweakeroo
+    modLocalRuntime libs.tweakeroo*/
 
     runtimeOnlyApiModules.forEach {
         modLocalRuntime(fabricApi.module(it, libs.versions.fabric.apiVersion.get()))

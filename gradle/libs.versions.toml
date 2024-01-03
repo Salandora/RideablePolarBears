@@ -1,29 +1,29 @@
 [versions]
-minecraft = "1.20.1"
-mc_range = "[1.20.1, 1.21)"
+minecraft = "1.19.2"
+mc_range = "[1.19.2, 1.19.3)"
 
 fabric_loader = "0.14.22"
-fabric_apiVersion = "0.90.4+1.20.1"
+fabric_apiVersion = "0.77.0+1.19.2"
 
-forge = "1.20.1-47.2.1"
-forge_range = "[47,)"
+forge = "1.19.2-43.3.5"
+forge_range = "[43,)"
 
-neoforge = "1.20.1-47.1.79"
-neo_range = "[47,)"
+# neoforge = "1.20.1-47.1.79"
+# neo_range = "[47,)"
 
-ignite = "0.8.0"
-purpur_api = "1.20.1-R0.1-SNAPSHOT"
-mixin = "0.8.5"
+# ignite = "0.8.0"
+# purpur_api = "1.20.1-R0.1-SNAPSHOT"
+# mixin = "0.8.5"
 
-quilt_loader = "0.21.0"
+# quilt_loader = "0.21.0"
 
 jetbrains_annotations = "24.0.1"
 findbugs = "3.0.1"
 
-modmenu = "7.2.2"
-replaymod = "1.20.1-2.6.13"
-malilib = "4780782"
-tweakeroo = "4623488"
+modmenu = "4.1.2"
+# replaymod = "1.20.1-2.6.13"
+# malilib = "4780782"
+# tweakeroo = "4623488"
 
 [libraries]
 minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
@@ -32,26 +32,26 @@ fabric_loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_l
 
 forge = { module = "net.minecraftforge:forge", version.ref = "forge" }
 
-neoforge = { module = "net.neoforged:forge", version.ref = "neoforge" }
+# neoforge = { module = "net.neoforged:forge", version.ref = "neoforge" }
 
-ignite = { module = "space.vectrix.ignite:ignite-api", version.ref = "ignite" }
-mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+# ignite = { module = "space.vectrix.ignite:ignite-api", version.ref = "ignite" }
+# mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 
-quilt_loader = { module = "org.quiltmc:quilt-loader", version.ref = "quilt_loader" }
+# quilt_loader = { module = "org.quiltmc:quilt-loader", version.ref = "quilt_loader" }
 
 jetbrains_annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains_annotations" }
 findbugs = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs" }
 
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
-replaymod = { module = "maven.modrinth:replaymod", version.ref = "replaymod" }
-malilib = { module = "curse.maven:malilib-303119", version.ref = "malilib" }
-tweakeroo = { module = "curse.maven:tweakeroo-297344", version.ref = "tweakeroo" }
+# replaymod = { module = "maven.modrinth:replaymod", version.ref = "replaymod" }
+# malilib = { module = "curse.maven:malilib-303119", version.ref = "malilib" }
+# tweakeroo = { module = "curse.maven:tweakeroo-297344", version.ref = "tweakeroo" }
 
 [plugins]
 architectury_plugin = { id = "architectury-plugin", version = "3.4-SNAPSHOT" }
 architectury_loom = { id = "dev.architectury.loom", version = "1.3-SNAPSHOT" }
 vineflower = { id = "io.github.juuxel.loom-vineflower", version = "1.11.0" }
-paperweight_userdev = { id = "io.papermc.paperweight.userdev", version = "1.5.5" }
+# paperweight_userdev = { id = "io.papermc.paperweight.userdev", version = "1.5.5" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
 
 minotaur = { id = "com.modrinth.minotaur", version = "2.8.4" }

@@ -2,7 +2,7 @@ plugins {
     alias libs.plugins.architectury.plugin apply false
     alias libs.plugins.architectury.loom apply false
     alias libs.plugins.vineflower apply false
-    alias libs.plugins.paperweight.userdev apply false
+//    alias libs.plugins.paperweight.userdev apply false
     alias libs.plugins.shadow apply false
     alias libs.plugins.minotaur apply false
     alias libs.plugins.cursegradle apply false
