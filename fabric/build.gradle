@@ -43,7 +43,7 @@ dependencies {
 }
 
 processResources {
-    inputs.property 'version', project.version
+    inputs.property 'version', rootProject.version
 
     filesMatching('fabricmc.mod.json') {
         expand version: inputs.properties.version
@@ -66,7 +66,7 @@ modrinth {
 
     projectId = 'rideablepolarbears'
     versionNumber = version
-    versionName = "${mod_name}-${version}"
+    versionName = "RideablePolarBears-${version}"
     versionType = 'release'
     file = remapJar.archiveFile
     changelog = project.file('../CHANGELOG.md').text
@@ -102,7 +102,7 @@ curseforge {
         addGameVersion 'Fabric'
 
         mainArtifact(remapJar) {
-            displayName = "${mod_name}-${version}"
+            displayName = "RideablePolarBears-${version}"
         }
 
         /*relations {

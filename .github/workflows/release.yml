@@ -9,7 +9,7 @@ jobs:
   release:
     strategy:
       matrix:
-        java: [ 17 ]
+        java: [ 21 ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
 
       - name: Get Minecraft Version
         id: minecraft_version
-        run: grep -e 'minecraft\s*=\s*".*"' gradle/libs.versions.toml | sed "s/\s//g" | sed 's/"//g' >> $GITHUB_OUTPUT
+        run: grep "minecraft_version" gradle.properties | sed "s/\s//g" >> $GITHUB_OUTPUT
 
       - name: Get Composite Version
         id: composite_version
@@ -71,7 +71,4 @@ jobs:
           draft: false
           prerelease: false
           artifacts: "fabric/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-fabric.jar,
-            forge/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-forge.jar,
-            neoforged/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar,
-            ignite_purpur/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-ignite_purpur.jar,
-            assets/${{ steps.mod_name.outputs.mod_name }}-ignite_purpur-datapack.zip"
+            neoforged/build/libs/${{ steps.mod_name.outputs.mod_name }}-${{ steps.composite_version.outputs.composite_version }}-neoforged.jar"

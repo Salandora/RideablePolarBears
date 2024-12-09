@@ -4,7 +4,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 
 public interface Tamable extends OwnableEntity {
-	boolean rideablePolarBears$isTame();
+	boolean rideablePolarBears$isTamed();
 
 	boolean rideablePolarBears$wantsToAttack(LivingEntity livingEntity, LivingEntity livingEntity2);
 

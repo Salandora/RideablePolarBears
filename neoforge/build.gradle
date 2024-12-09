@@ -6,15 +6,8 @@ plugins {
 }
 
 architectury {
-    injectInjectables = false
     platformSetupLoomIde()
-    forge()
-}
-
-loom {
-    forge {
-        mixinConfig "${mod_id}.common.mixins.json"
-    }
+    neoForge()
 }
 
 configurations {
@@ -24,7 +17,7 @@ configurations {
     }
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
-    developmentForge.extendsFrom common
+    developmentNeoForge.extendsFrom common
 
     // Files in this configuration will be bundled into your mod using the Shadow plugin.
     // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
@@ -42,18 +35,18 @@ repositories {
 }
 
 dependencies {
-    forge "net.neoforged:forge:${rootProject.neoforge}"
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge}"
 
     // Dependencies
     def path = "${project.parent.path}:common" // Get the correct path, even if we are in a multiproject setup
     common(project(path: path, configuration: "namedElements")) { transitive false }
-    shadowBundle(project(path: path, configuration: "transformProductionForge"))
+    shadowBundle(project(path: path, configuration: "transformProductionNeoForge"))
 }
 
 processResources {
     inputs.property 'version', project.version
 
-    filesMatching('META-INF/mods.toml') {
+    filesMatching('META-INF/neoforge.mods.toml') {
         expand version: inputs.properties.version
     }
 }
@@ -74,7 +67,7 @@ modrinth {
 
     projectId = 'rideablepolarbears'
     versionNumber = version
-    versionName = "${mod_name}-${version}"
+    versionName = "RideablePolarBears-${version}"
     versionType = 'release'
     file = remapJar.archiveFile
     changelog = project.file('../CHANGELOG.md').text
@@ -110,7 +103,7 @@ curseforge {
         addGameVersion 'NeoForge'
 
         mainArtifact(remapJar) {
-            displayName = "${mod_name}-${version}"
+            displayName = "RideablePolarBears-${version}"
         }
 
         /*relations {

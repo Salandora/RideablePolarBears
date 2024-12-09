@@ -10,16 +10,8 @@ pluginManagement {
             url = 'https://maven.fabricmc.net/'
         }
         maven {
-            name = 'Quilt'
-            url = 'https://maven.quiltmc.org/repository/release'
-        }
-        maven {
             name = 'NeoForged'
             url = 'https://maven.neoforged.net/releases/'
-        }
-        maven {
-            name = "PaperMC"
-            url = "https://repo.papermc.io/repository/maven-public/"
         }
     }
 }
@@ -28,5 +20,4 @@ rootProject.name = "RideablePolarBears"
 
 include("common")
 include("fabric")
-include("forge")
 include("neoforge")

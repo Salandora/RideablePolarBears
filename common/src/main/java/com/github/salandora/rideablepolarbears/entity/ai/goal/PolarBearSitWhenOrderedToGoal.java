@@ -24,7 +24,7 @@ public class PolarBearSitWhenOrderedToGoal extends Goal {
 
 	@Override
 	public boolean canUse() {
-		if (!this.mob.rideablePolarBears$isTame()) {
+		if (!this.mob.rideablePolarBears$isTamed()) {
 			return false;
 		} else if (this.bear.isInWaterOrBubble()) {
 			return false;

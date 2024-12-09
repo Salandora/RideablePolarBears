@@ -7,7 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-        java: [ 17 ]
+        java: [ 21 ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,6 +44,4 @@ jobs:
           name: Artifacts
           path: |
             fabric/build/libs/
-            forge/build/libs/
             neoforged/build/libs/
-            ignite_purpur/build/libs/

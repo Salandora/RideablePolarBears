@@ -1,5 +1,7 @@
 package com.github.salandora.rideablepolarbears.mixins;
 
+import com.github.salandora.rideablepolarbears.attachment.Attachments;
+import com.github.salandora.rideablepolarbears.attachment.EntityAttachment;
 import com.github.salandora.rideablepolarbears.entity.Tamable;
 import com.github.salandora.rideablepolarbears.entity.ai.goal.IPolarBearAttackPlayersGoal;
 import com.github.salandora.rideablepolarbears.entity.ai.goal.PolarBearOwnerHurtByTargetGoal;
@@ -8,12 +10,10 @@ import com.github.salandora.rideablepolarbears.entity.ai.goal.PolarBearSitWhenOr
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -23,8 +23,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ItemBasedSteering;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
@@ -51,7 +51,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.Team;
+import net.minecraft.world.scores.PlayerTeam;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -64,26 +64,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 import java.util.UUID;
 
-@SuppressWarnings("WrongEntityDataParameterClass")
 @Mixin(PolarBear.class)
 public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tamable, PlayerRideableJumping, Saddleable {
-	@Shadow public abstract boolean isStanding();
+	@Shadow
+	public abstract boolean isStanding();
 
-	@Shadow public abstract void setStanding(boolean bl);
+	@Shadow
+	public abstract void setStanding(boolean bl);
 
 	@Shadow
 	private float clientSideStandAnimationO;
 
 	@Unique
-	private static final EntityDataAccessor<Byte> rideablePolarBears$DATA_FLAGS_ID = SynchedEntityData.defineId(PolarBear.class, EntityDataSerializers.BYTE);
+	private static final int rideablePolarBears$SITTING_FLAG = 2;
 	@Unique
-	private static final EntityDataAccessor<Optional<UUID>> rideablePolarBears$DATA_OWNERUUID_ID = SynchedEntityData.defineId(PolarBear.class, EntityDataSerializers.OPTIONAL_UUID);
+	private static final int rideablePolarBears$TAMED_FLAG = 4;
 	@Unique
-	private static final EntityDataAccessor<Integer> rideablePolarBears$BOOST_TIME = SynchedEntityData.defineId(PolarBear.class, EntityDataSerializers.INT);
-	@Unique
-	private static final EntityDataAccessor<Boolean> rideablePolarBears$SADDLED = SynchedEntityData.defineId(PolarBear.class, EntityDataSerializers.BOOLEAN);
-	@Unique
-	private ItemBasedSteering rideablePolarBears$saddledComponent;
+	private static final int rideablePolarBears$SADDLED_FLAG = 16;
+
 	@Unique
 	protected float rideablePolarBears$playerJumpPendingScale;
 	@Unique
@@ -99,6 +97,20 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 		super(entityType, level);
 	}
 
+	@Unique
+	protected boolean rideablePolarBears$getFlag(int bitmask) {
+		return (EntityAttachment.INSTANCE.getData(this, Attachments.POLARBEAR_FLAGS) & bitmask) != 0;
+	}
+	@Unique
+	protected void rideablePolarBears$setFlag(int bitmask, boolean flag) {
+		byte b = EntityAttachment.INSTANCE.getData(this, Attachments.POLARBEAR_FLAGS);
+		if (flag) {
+			EntityAttachment.INSTANCE.setData(this, Attachments.POLARBEAR_FLAGS, (byte)(b | bitmask));
+		} else {
+			EntityAttachment.INSTANCE.setData(this, Attachments.POLARBEAR_FLAGS, (byte)(b & ~bitmask));
+		}
+	}
+
 	@Override
 	public boolean isFood(@NotNull ItemStack itemStack) {
 		return itemStack.is(ItemTags.FISHES);
@@ -106,7 +118,6 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void rideablePolarBears$constructor(EntityType<? extends Animal> entityType, Level world, CallbackInfo ci) {
-		this.rideablePolarBears$saddledComponent = new ItemBasedSteering(this.entityData, rideablePolarBears$BOOST_TIME, rideablePolarBears$SADDLED);
 		this.rideablePolarBears$reassessTameGoals();
 	}
 
@@ -122,26 +133,9 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 	@Unique
 	protected void rideablePolarBears$reassessTameGoals() {
-		if (rideablePolarBears$isTame()) {
+		if (rideablePolarBears$isTamed()) {
 			this.targetSelector.removeAllGoals(goal -> goal instanceof IPolarBearAttackPlayersGoal);
 		}
-	}
-
-	@Inject(method = "defineSynchedData", at = @At("TAIL"))
-	private void rideablePolarBears$defineSynchedData(CallbackInfo ci) {
-		this.entityData.define(rideablePolarBears$DATA_FLAGS_ID, (byte)0);
-		this.entityData.define(rideablePolarBears$DATA_OWNERUUID_ID, Optional.empty());
-		this.entityData.define(rideablePolarBears$BOOST_TIME, 0);
-		this.entityData.define(rideablePolarBears$SADDLED, false);
-	}
-
-	@Override
-	public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> data) {
-		if (rideablePolarBears$BOOST_TIME.equals(data) && this.level().isClientSide) {
-			this.rideablePolarBears$saddledComponent.onSynced();
-		}
-
-		super.onSyncedDataUpdated(data);
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -165,14 +159,14 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 		ItemStack itemStack = player.getItemInHand(hand);
 		boolean foodItem = this.isFood(itemStack);
-		if (this.rideablePolarBears$isTame()) {
+		if (this.rideablePolarBears$isTamed()) {
 			if (foodItem && this.getHealth() < this.getMaxHealth()) {
 				if (!player.getAbilities().instabuild) {
 					itemStack.shrink(1);
 				}
 
 				//noinspection DataFlowIssue
-				this.heal((float) itemStack.getItem().getFoodProperties().getNutrition());
+				this.heal((float) itemStack.get(DataComponents.FOOD).nutrition());
 				return InteractionResult.SUCCESS;
 			} else if (!foodItem && this.isSaddled() && !this.isVehicle() && !this.isBaby() && this.rideablePolarBears$isOwnedBy(player) && !player.isSecondaryUseActive()) {
 				this.rideablePolarBears$doPlayerRide(player);
@@ -233,7 +227,7 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 	@Override
 	public boolean isSaddled() {
-		return this.rideablePolarBears$saddledComponent.hasSaddle();
+		return this.rideablePolarBears$getFlag(rideablePolarBears$SADDLED_FLAG);
 	}
 
 	@Override
@@ -242,8 +236,8 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	}
 
 	@Override
-	public void equipSaddle(@Nullable SoundSource sound) {
-		this.rideablePolarBears$saddledComponent.setSaddle(true);
+	public void equipSaddle(ItemStack itemStack, @Nullable SoundSource sound) {
+		this.rideablePolarBears$setFlag(rideablePolarBears$SADDLED_FLAG, true);
 		if (sound != null) {
 			this.level().playSound(null, this, SoundEvents.POLAR_BEAR_AMBIENT, sound, 0.5F, 1.0F);
 		}
@@ -414,33 +408,32 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	}
 
 	@Override
-	protected void positionRider(@NotNull Entity entity, Entity.@NotNull MoveFunction moveFunction) {
+	protected void positionRider(Entity entity, Entity.MoveFunction moveFunction) {
 		super.positionRider(entity, moveFunction);
-		if (this.clientSideStandAnimationO > 0.0F) {
-			float f = Mth.sin(this.yBodyRot * (float) (Math.PI / 180.0));
-			float g = Mth.cos(this.yBodyRot * (float) (Math.PI / 180.0));
-			float h = (0.8F / 6.0F) * this.clientSideStandAnimationO;
-			float i = -(0.5F / 6.0F) * this.clientSideStandAnimationO;
-			moveFunction.accept(
-					entity,
-					this.getX() + (double)(h * f),
-					this.getY() + this.getPassengersRidingOffset() + entity.getMyRidingOffset() + (double)i,
-					this.getZ() - (double)(h * g)
-			);
-			if (entity instanceof LivingEntity) {
-				((LivingEntity)entity).yBodyRot = this.yBodyRot;
-			}
+		if (entity instanceof LivingEntity) {
+			((LivingEntity)entity).yBodyRot = this.yBodyRot;
 		}
+
+	}
+
+	@Override
+	protected Vec3 getPassengerAttachmentPoint(Entity entity, EntityDimensions entityDimensions, float f) {
+		return super.getPassengerAttachmentPoint(entity, entityDimensions, f)
+				.add(new Vec3(
+						(double)0.0F,
+						-(0.8F / 6.0F) * (double)this.clientSideStandAnimationO * (double)f,
+						-(0.8F / 6.0F) * (double)this.clientSideStandAnimationO * (double)f)
+					.yRot(-this.getYRot() * ((float)Math.PI / 180F))
+				);
 	}
 
 	@Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
 	private void rideablePolarBears$writeCustomDataToNbt(@NotNull CompoundTag compoundTag, CallbackInfo ci) {
-		compoundTag.putBoolean("Tame", this.rideablePolarBears$isTame());
+		compoundTag.putBoolean("Tame", this.rideablePolarBears$isTamed());
 		if (this.getOwnerUUID() != null) {
 			compoundTag.putUUID("Owner", this.getOwnerUUID());
 		}
 
-		this.rideablePolarBears$saddledComponent.addAdditionalSaveData(compoundTag);
 		compoundTag.putBoolean("Sitting", this.rideablePolarBears$orderedToSit);
 	}
 
@@ -453,22 +446,16 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 		}
 
 		if (uUID != null) {
-			try {
-				this.rideablePolarBears$setOwnerUUID(uUID);
-				this.rideablePolarBears$setTame(true);
-			} catch (Throwable var4) {
-				this.rideablePolarBears$setTame(false);
-			}
+			this.rideablePolarBears$setOwnerUUID(uUID);
 		}
 
-		this.rideablePolarBears$saddledComponent.readAdditionalSaveData(compoundTag);
 		this.rideablePolarBears$orderedToSit = compoundTag.getBoolean("Sitting");
 		this.rideablePolarBears$setInSittingPose(this.rideablePolarBears$orderedToSit);
 	}
 
 	@Override
-	public boolean canBeLeashed(@NotNull Player player) {
-		return !this.isAngry() && super.canBeLeashed(player);
+	public boolean canBeLeashed() {
+		return !this.isAngry() && super.canBeLeashed();
 	}
 
 	@Unique
@@ -501,45 +488,34 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 	@Unique
 	public boolean rideablePolarBears$isInSittingPose() {
-		return (this.entityData.get(rideablePolarBears$DATA_FLAGS_ID) & 1) != 0;
+		return this.rideablePolarBears$getFlag(rideablePolarBears$SITTING_FLAG);
 	}
 
 	@Unique
-	public void rideablePolarBears$setInSittingPose(boolean bl) {
-		byte b = this.entityData.get(rideablePolarBears$DATA_FLAGS_ID);
-		if (bl) {
-			this.entityData.set(rideablePolarBears$DATA_FLAGS_ID, (byte)(b | 1));
-		} else {
-			this.entityData.set(rideablePolarBears$DATA_FLAGS_ID, (byte)(b & -2));
-		}
+	public void rideablePolarBears$setInSittingPose(boolean sitting) {
+		this.rideablePolarBears$setFlag(rideablePolarBears$SITTING_FLAG, sitting);
 	}
 
 	@Unique
 	@Override
-	public boolean rideablePolarBears$isTame() {
-		return (this.entityData.get(rideablePolarBears$DATA_FLAGS_ID) & 4) != 0;
+	public boolean rideablePolarBears$isTamed() {
+		return this.rideablePolarBears$getFlag(rideablePolarBears$TAMED_FLAG);
 	}
 
 	@Unique
-	public void rideablePolarBears$setTame(boolean bl) {
-		byte b = this.entityData.get(rideablePolarBears$DATA_FLAGS_ID);
-		if (bl) {
-			this.entityData.set(rideablePolarBears$DATA_FLAGS_ID, (byte)(b | 4));
-		} else {
-			this.entityData.set(rideablePolarBears$DATA_FLAGS_ID, (byte)(b & -5));
-		}
-
+	public void rideablePolarBears$setTame(boolean tame) {
+		this.rideablePolarBears$setFlag(rideablePolarBears$TAMED_FLAG, tame);
 		this.rideablePolarBears$reassessTameGoals();
 	}
 
 	@Nullable
 	@Override
 	public UUID getOwnerUUID() {
-		return this.entityData.get(rideablePolarBears$DATA_OWNERUUID_ID).orElse(null);
+		return EntityAttachment.INSTANCE.getData(this, Attachments.POLARBEAR_OWNER).orElse(null);
 	}
 	@Unique
-	public void rideablePolarBears$setOwnerUUID(@Nullable UUID uUID) {
-		this.entityData.set(rideablePolarBears$DATA_OWNERUUID_ID, Optional.ofNullable(uUID));
+	public void rideablePolarBears$setOwnerUUID(@Nullable UUID uuid) {
+		EntityAttachment.INSTANCE.setData(this, Attachments.POLARBEAR_OWNER, Optional.ofNullable(uuid));
 	}
 
 	@Unique
@@ -579,8 +555,8 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	}
 
 	@Override
-	public Team getTeam() {
-		if (this.rideablePolarBears$isTame()) {
+	public PlayerTeam getTeam() {
+		if (this.rideablePolarBears$isTamed()) {
 			LivingEntity livingEntity = this.getOwner();
 			if (livingEntity != null) {
 				return livingEntity.getTeam();
@@ -592,7 +568,7 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 
 	@Override
 	public boolean isAlliedTo(@NotNull Entity entity) {
-		if (this.rideablePolarBears$isTame()) {
+		if (this.rideablePolarBears$isTamed()) {
 			LivingEntity livingEntity = this.getOwner();
 			if (entity == livingEntity) {
 				return true;

@@ -22,7 +22,7 @@ public class PolarBearOwnerHurtTargetGoal extends TargetGoal {
 
 	@Override
 	public boolean canUse() {
-		if (this.tameAnimal.rideablePolarBears$isTame() && !this.tameAnimal.rideablePolarBears$isOrderedToSit()) {
+		if (this.tameAnimal.rideablePolarBears$isTamed() && !this.tameAnimal.rideablePolarBears$isOrderedToSit()) {
 			LivingEntity livingEntity = this.tameAnimal.getOwner();
 			if (livingEntity == null) {
 				return false;

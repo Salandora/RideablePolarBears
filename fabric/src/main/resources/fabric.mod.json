@@ -20,7 +20,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.github.salandora.rideablepolarbears.RideablePolarBearsMod"
+      "com.github.salandora.rideablepolarbears.fabric.RideablePolarBearsFabric"
     ]
   },
 
@@ -30,7 +30,7 @@
 
   "depends": {
     "fabricloader": ">=0.18.1",
-    "minecraft": ">=1.20.1",
-    "java": ">=17"
+    "minecraft": ">=1.21.1",
+    "java": ">=21"
   }
 }
