@@ -14,6 +14,10 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -126,7 +130,7 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	private void rideablePolarBears$initGoals(CallbackInfo ci) {
 		this.goalSelector.addGoal(2, new PolarBearSitWhenOrderedToGoal((PolarBear) (Object) this));
 		this.goalSelector.addGoal(3, new BreedGoal(this, 1.0, PolarBear.class));
-		this.goalSelector.addGoal(3, new TemptGoal(this, 1.25, Ingredient.of(ItemTags.FISHES), false));
+		this.goalSelector.addGoal(3, new TemptGoal(this, 1.25, stack -> stack.is(ItemTags.FISHES), false));
 		this.targetSelector.addGoal(1, new PolarBearOwnerHurtByTargetGoal((PolarBear) (Object) this));
 		this.targetSelector.addGoal(2, new PolarBearOwnerHurtTargetGoal((PolarBear) (Object) this));
 	}
@@ -170,7 +174,7 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 				return InteractionResult.SUCCESS;
 			} else if (!foodItem && this.isSaddled() && !this.isVehicle() && !this.isBaby() && this.rideablePolarBears$isOwnedBy(player) && !player.isSecondaryUseActive()) {
 				this.rideablePolarBears$doPlayerRide(player);
-				return InteractionResult.sidedSuccess(this.level().isClientSide);
+				return InteractionResult.SUCCESS;
 			} else {
 				InteractionResult actionResult = super.mobInteract(player, hand);
 				if (!actionResult.consumesAction()) {
@@ -244,10 +248,10 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	}
 
 	@Override
-	protected void dropEquipment() {
-		super.dropEquipment();
+	protected void dropEquipment(ServerLevel serverLevel) {
+		super.dropEquipment(serverLevel);
 		if (this.isSaddled()) {
-			this.spawnAtLocation(Items.SADDLE);
+			this.spawnAtLocation(serverLevel, Items.SADDLE);
 		}
 	}
 
@@ -567,28 +571,26 @@ public abstract class PolarBearsMixin extends Animal implements NeutralMob, Tama
 	}
 
 	@Override
-	public boolean isAlliedTo(@NotNull Entity entity) {
+	public boolean considersEntityAsAlly(@NotNull Entity entity) {
 		if (this.rideablePolarBears$isTamed()) {
 			LivingEntity livingEntity = this.getOwner();
 			if (entity == livingEntity) {
 				return true;
 			}
-
-			if (livingEntity != null) {
-				return livingEntity.isAlliedTo(entity);
-			}
 		}
 
-		return super.isAlliedTo(entity);
+		return super.considersEntityAsAlly(entity);
 	}
 
 	@Override
 	public void die(@NotNull DamageSource damageSource) {
-		if (!this.level().isClientSide && this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES) && this.getOwner() instanceof ServerPlayer) {
-			this.getOwner().sendSystemMessage(this.getCombatTracker().getDeathMessage());
-		}
-
 		super.die(damageSource);
+		if (this.dead
+				&& this.level() instanceof ServerLevel serverLevel
+				&& serverLevel.getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES)
+				&& this.getOwner() instanceof ServerPlayer serverPlayer) {
+			serverPlayer.sendSystemMessage(this.getCombatTracker().getDeathMessage());
+		}
 	}
 
 	@Unique

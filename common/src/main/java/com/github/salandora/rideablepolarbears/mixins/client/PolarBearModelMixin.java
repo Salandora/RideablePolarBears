@@ -1,6 +1,8 @@
 package com.github.salandora.rideablepolarbears.mixins.client;
 
-import com.github.salandora.rideablepolarbears.entity.Tamable;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.model.PolarBearModel;
 import net.minecraft.client.model.QuadrupedModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -10,48 +12,58 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.world.entity.Saddleable;
-import net.minecraft.world.entity.animal.PolarBear;
+import net.minecraft.client.renderer.entity.state.PolarBearRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(PolarBearModel.class)
-public class PolarBearModelMixin<T extends PolarBear> extends QuadrupedModel<T> {
+public class PolarBearModelMixin extends QuadrupedModel<PolarBearRenderState> {
 	@Unique
 	private ModelPart rideablePolarBears$saddle;
 
-	protected PolarBearModelMixin(ModelPart modelPart, boolean bl, float f, float g, float h, float i, int j) {
-		super(modelPart, bl, f, g, h, i, j);
+	protected PolarBearModelMixin(ModelPart modelPart) {
+		super(modelPart);
 	}
 
-	@Inject(method = "<init>", at = @At("TAIL"))
+	@Inject(
+			method = "<init>",
+			at = @At("TAIL")
+	)
 	public void setRideablePolarBears$constructor(ModelPart modelPart, CallbackInfo ci) {
 		this.rideablePolarBears$saddle = this.body.getChild("saddle");
 	}
 
-	@Inject(method = "createBodyLayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/geom/builders/LayerDefinition;create(Lnet/minecraft/client/model/geom/builders/MeshDefinition;II)Lnet/minecraft/client/model/geom/builders/LayerDefinition;", shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILHARD)
-	private static void setRideablePolarBears$injectParts(CallbackInfoReturnable<LayerDefinition> cir, MeshDefinition meshDefinition, PartDefinition partDefinition) {
+	@WrapOperation(
+			method = "createBodyLayer",
+			at = @At(
+					value = "INVOKE",
+					target = "Lnet/minecraft/client/model/geom/builders/LayerDefinition;create(Lnet/minecraft/client/model/geom/builders/MeshDefinition;II)Lnet/minecraft/client/model/geom/builders/LayerDefinition;"
+			)
+	)
+	private static LayerDefinition setRideablePolarBears$injectParts(MeshDefinition arg, int i, int j, Operation<LayerDefinition> original, @Local PartDefinition partDefinition) {
 		PartDefinition body = partDefinition.getChild("body");
-
 		body.addOrReplaceChild(
 				"saddle",
 				CubeListBuilder.create()
-						.texOffs(83, 14).addBox( -4.0f, -3.1F, -17.0F, 12.0F, 9.0F, 4.0F, new CubeDeformation(0.1F))
-						.texOffs(83, 0).addBox(-5F, -4.1F, -13F, 14.0F, 9.0F, 5.0F, new CubeDeformation(0.1F)),
+						.texOffs(83, 14).addBox(-4.0f, -3.1F, -17.0F, 12.0F, 9.0F, 4.0F, new CubeDeformation(0.1F))
+						.texOffs(83,  0).addBox(-5.0F, -4.1F, -13.0F, 14.0F, 9.0F, 5.0F, new CubeDeformation(0.1F)),
 				PartPose.rotation((float)(-Math.PI / 2), 0, 0)
 		);
+		return original.call(arg, i, j);
 	}
 
-	@Inject(method = "setupAnim(Lnet/minecraft/world/entity/animal/PolarBear;FFFFF)V", at = @At("HEAD"), cancellable = true)
-	public void setupAnim(PolarBear polarBear, float f, float g, float h, float i, float j, CallbackInfo ci) {
-		this.rideablePolarBears$saddle.visible = ((Saddleable)polarBear).isSaddled();
+	@Inject(
+			method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/PolarBearRenderState;)V",
+			at = @At("HEAD"),
+			cancellable = true
+	)
+	public void setupAnim(PolarBearRenderState polarBearRenderState, CallbackInfo ci) {
+		this.rideablePolarBears$saddle.visible = polarBearRenderState.rideablePolarBears$isSaddled();
 
-		if (((Tamable)polarBear).rideablePolarBears$isInSittingPose()) {
+		if (polarBearRenderState.rideablePolarBears$isInSittingPose()) {
 			this.body.xRot = (float) (Math.PI * 1.8 / 5.0F);
 			this.body.y = 17.0F;
 
@@ -71,7 +83,7 @@ public class PolarBearModelMixin<T extends PolarBear> extends QuadrupedModel<T> 
 			this.leftFrontLeg.z = this.rightFrontLeg.z;
 			this.leftFrontLeg.xRot = (float) (Math.PI * 1.9);
 
-			if (this.young) {
+			if (polarBearRenderState.isBaby) {
 				this.head.y = 8.0F;
 				this.head.z = -14.0F;
 			} else {

@@ -8,7 +8,9 @@
         "PolarBearsMixin"
     ],
     "client": [
-        "client.PolarBearModelMixin"
+        "client.PolarBearModelMixin",
+        "client.PolarBearRendererMixin",
+        "client.PolarBearRenderStateMixin"
     ],
     "injectors": {
         "defaultRequire": 1
