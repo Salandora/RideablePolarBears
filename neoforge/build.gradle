@@ -3,8 +3,9 @@ apply plugin: libs.plugins.minotaur.get().getPluginId()
 apply plugin: libs.plugins.cursegradle.get().getPluginId()
 
 architectury {
+    injectInjectables = false
     platformSetupLoomIde()
-    loader("quilt")
+    forge()
 }
 
 loom {
@@ -14,92 +15,74 @@ loom {
         accessWidenerPath.set(project(":common").loom.accessWidenerPath)
     }
 
-    runs {
-        client {
-            client()
-            setConfigName("Quilt Client")
-        }
-        server {
-            server()
-            setConfigName("Quilt Server")
+    forge {
+        convertAccessWideners = true
+        if (accessWidenerPath.getOrNull() != null && accessWidenerPath.asFile.get().exists()) {
+            extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
         }
 
-        configureEach {
-            runDir "../run/${it.configName.replace(' ', '_')}"
-        }
+        mixinConfig "${mod_id}.common.mixins.json"
+        // mixinConfig "${mod_id}.mixins.json"
     }
 }
 
 configurations {
-    common
-    shadowCommon // Don't use shadow from the shadow plugin since it *excludes* files.
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
-    developmentQuilt.extendsFrom common
+    developmentForge.extendsFrom common
+
+    // Files in this configuration will be bundled into your mod using the Shadow plugin.
+    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+repositories {
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases/'
+    }
 }
 
 dependencies {
-    modImplementation libs.quilt.loader
+    forge libs.neoforge
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionQuilt")) { transitive false }
+    shadowBundle(project(path: ":common", configuration: "transformProductionForge"))
 }
 
 processResources {
-    def expandProps = [
-            "version"                 : version,
+    inputs.property 'version', project.version
 
-            "mod_id"                  : mod_id,
-            "mod_name"                : mod_name,
-            "mod_description"         : mod_description,
-
-            "minecraft_version"       : libs.versions.minecraft.get(),
-
-            "quilt_loader_version"   : libs.versions.quilt.loader.get(),
-    ]
-
-    inputs.properties(expandProps)
-
-    filesMatching(['pack.mcmeta', 'quilt.mod.json']) {
-        expand expandProps
+    filesMatching('META-INF/mods.toml') {
+        expand version: inputs.properties.version
     }
 }
 
 shadowJar {
-    exclude "architectury.common.json"
-
-    configurations = [project.configurations.shadowCommon]
-    archiveClassifier.set('dev-shadow')
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = 'dev-shadow'
 }
 
 remapJar {
-    injectAccessWidener = true
     inputFile.set shadowJar.archiveFile
-    dependsOn shadowJar
-    archiveClassifier.set(null)
-}
-
-jar {
-    archiveClassifier.set('dev')
-}
-
-sourcesJar {
-    def commonSources = project(":common").sourcesJar
-    dependsOn commonSources
-    from commonSources.archiveFile.map { zipTree(it) }
-}
-
-components.java {
-    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
-        skip()
-    }
 }
 
 publishing {
     publications {
-        mavenQuilt(MavenPublication) {
+        mavenFabric(MavenPublication) {
             artifactId = base.archivesName.get()
-            from components.java
+            version = project.version
+            artifact(remapJar) {
+                builtBy remapJar
+                classifier ''
+            }
         }
     }
 
@@ -121,21 +104,21 @@ modrinth {
     file = remapJar.archiveFile
     changelog = rootProject.file('CHANGELOG.md').text
     gameVersions = [libs.versions.minecraft.get()]
-    loaders = ['quilt']
+    loaders = ['neoforge']
     detectLoaders = false
 
-    dependencies {
+    /*dependencies {
         // A special DSL for creating dependencies
         // scope.type
         // The scope can be `required`, `optional`, `incompatible`, or `embedded`
         // The type can either be `project` or `version`
-    }
+    }*/
 }
 
 curseforge {
     curseGradleOptions.debug = providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
 
-    apiKey = providers.environmentVariable("CURSEFORGE_TOKEN").getOrElse("")
+    apiKey = providers.environmentVariable("CURSEFORGE_TOKEN").getOrElse("invalid")
 
     curseGradleOptions.javaIntegration = false
     curseGradleOptions.forgeGradleIntegration = false
@@ -149,13 +132,13 @@ curseforge {
         changelog = rootProject.file('CHANGELOG.md')
 
         addGameVersion libs.versions.minecraft.get()
-        addGameVersion 'Quilt'
+        addGameVersion 'NeoForge'
 
         mainArtifact(remapJar) {
             displayName = "${mod_name}-${version}"
         }
 
-        relations {
-        }
+        /*relations {
+        }*/
     }
 }
