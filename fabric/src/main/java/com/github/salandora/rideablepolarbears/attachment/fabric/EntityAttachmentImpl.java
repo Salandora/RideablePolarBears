@@ -34,6 +34,11 @@ public class EntityAttachmentImpl extends EntityAttachment {
 	}
 
 	@Override
+	public <T> void registerOnAttachmentSet(Entity e, AttachmentType<T> type, EntityAttachment.OnAttachmentSet<T> callback) {
+		e.<T>onAttachedSet(type.attachmentType()).register(callback::onAttachedSet);
+	}
+
+	@Override
 	public <T> AttachmentType<T> create(ResourceLocation id, Consumer<Builder<T>> consumer) {
 		net.fabricmc.fabric.api.attachment.v1.AttachmentType<T> type = AttachmentRegistry.create(id, builder -> consumer.accept(new BuilderImpl<>(builder)));
 		return new AttachmentType<>() {

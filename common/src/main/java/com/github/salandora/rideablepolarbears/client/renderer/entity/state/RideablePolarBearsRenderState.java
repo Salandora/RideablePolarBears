@@ -2,13 +2,14 @@ package com.github.salandora.rideablepolarbears.client.renderer.entity.state;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.world.item.ItemStack;
 
 @Environment(EnvType.CLIENT)
 public interface RideablePolarBearsRenderState {
-	default boolean rideablePolarBears$isSaddled() {
+	default ItemStack rideablePolarBears$getSaddle() {
 		throw new AssertionError("This shouldn't happen!");
 	}
-	default void rideablePolarBears$setSaddled(boolean value){
+	default void rideablePolarBears$setSaddle(ItemStack value){
 		throw new AssertionError("This shouldn't happen!");
 	}
 

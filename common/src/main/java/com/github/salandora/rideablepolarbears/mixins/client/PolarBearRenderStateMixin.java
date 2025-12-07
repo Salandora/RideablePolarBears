@@ -3,25 +3,26 @@ package com.github.salandora.rideablepolarbears.mixins.client;
 import com.github.salandora.rideablepolarbears.client.renderer.entity.state.RideablePolarBearsRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.entity.state.PolarBearRenderState;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(PolarBearRenderState.class)
 public class PolarBearRenderStateMixin extends LivingEntityRenderState implements RideablePolarBearsRenderState {
 	@Unique
-	private boolean rideablePolarBears$isSaddled;
+	private ItemStack rideablePolarBears$isSaddle = ItemStack.EMPTY;
 	@Unique
 	private boolean rideablePolarBears$isInSittingPose;
 
 
 	@Override
-	public boolean rideablePolarBears$isSaddled() {
-		return rideablePolarBears$isSaddled;
+	public ItemStack rideablePolarBears$getSaddle() {
+		return rideablePolarBears$isSaddle;
 	}
 
 	@Override
-	public void rideablePolarBears$setSaddled(boolean value) {
-		rideablePolarBears$isSaddled = value;
+	public void rideablePolarBears$setSaddle(ItemStack value) {
+		rideablePolarBears$isSaddle = value;
 	}
 
 	@Override

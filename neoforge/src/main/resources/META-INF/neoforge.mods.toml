@@ -15,16 +15,19 @@ description = '''Enables you to breed and ride polar bears'''
 [[dependencies.rideablepolarbears]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.4,)"
+versionRange = "[21.8,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.rideablepolarbears]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.4,)"
+versionRange = "[1.21.8,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[mixins]]
 config = "rideablepolarbears.common.mixins.json"
+
+[[mixins]]
+config = "rideablepolarbears.neoforge.mixins.json"

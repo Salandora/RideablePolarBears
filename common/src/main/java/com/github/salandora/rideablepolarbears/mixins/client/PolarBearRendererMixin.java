@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.entity.AgeableMobRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.PolarBearRenderer;
 import net.minecraft.client.renderer.entity.state.PolarBearRenderState;
-import net.minecraft.world.entity.Saddleable;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.PolarBear;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +24,7 @@ public abstract class PolarBearRendererMixin extends AgeableMobRenderer<PolarBea
 			at = @At(value = "RETURN")
 	)
 	public void rideablePolarBears$extractRenderState(PolarBear polarBear, PolarBearRenderState polarBearRenderState, float f, CallbackInfo ci) {
-		polarBearRenderState.rideablePolarBears$setSaddled(((Saddleable)polarBear).isSaddled());
+		polarBearRenderState.rideablePolarBears$setSaddle(polarBear.getItemBySlot(EquipmentSlot.SADDLE).copy());
 		polarBearRenderState.rideablePolarBears$setInSittingPose(((Tamable)polarBear).rideablePolarBears$isInSittingPose());
 	}
 }

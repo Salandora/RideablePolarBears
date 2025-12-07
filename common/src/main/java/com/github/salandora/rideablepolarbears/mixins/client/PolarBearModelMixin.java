@@ -33,7 +33,7 @@ public class PolarBearModelMixin extends QuadrupedModel<PolarBearRenderState> {
 			at = @At("TAIL")
 	)
 	public void setRideablePolarBears$constructor(ModelPart modelPart, CallbackInfo ci) {
-		this.rideablePolarBears$saddle = this.body.getChild("saddle");
+		 this.rideablePolarBears$saddle = this.body.getChild("saddle");
 	}
 
 	@WrapOperation(
@@ -61,7 +61,7 @@ public class PolarBearModelMixin extends QuadrupedModel<PolarBearRenderState> {
 			cancellable = true
 	)
 	public void setupAnim(PolarBearRenderState polarBearRenderState, CallbackInfo ci) {
-		this.rideablePolarBears$saddle.visible = polarBearRenderState.rideablePolarBears$isSaddled();
+		this.rideablePolarBears$saddle.visible = !polarBearRenderState.rideablePolarBears$getSaddle().isEmpty();
 
 		if (polarBearRenderState.rideablePolarBears$isInSittingPose()) {
 			this.body.xRot = (float) (Math.PI * 1.8 / 5.0F);
