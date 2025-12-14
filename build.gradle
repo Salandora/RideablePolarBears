@@ -1,27 +1,28 @@
 plugins {
-    alias libs.plugins.architectury.plugin
-    alias libs.plugins.architectury.loom apply false
-    alias libs.plugins.shadow apply false
-    alias libs.plugins.minotaur apply false
-    alias libs.plugins.cursegradle apply false
+    id "architectury-plugin" version "${architectury_plugin}"
+    id "dev.architectury.loom" version "${architectury_loom}" apply false
+    id "com.gradleup.shadow" version "${shadow}" apply false
+
+    id "com.modrinth.minotaur" version "${minotaur}" apply false
+    id "com.matthewprenger.cursegradle" version "${cursegradle}" apply false
 }
 
 architectury {
-    minecraft = libs.versions.minecraft.get()
+    minecraft = rootProject.minecraft_version
 }
 
 allprojects {
-    group = rootProject.maven_group
-    version = "${rootProject.mod_version}+${libs.versions.minecraft.get()}-${project.name}"
+    group = project.maven_group
+    version = "${project.mod_version}+${rootProject.minecraft_version}-${project.name}"
 }
 
 subprojects {
-    apply plugin: libs.plugins.architectury.plugin.get().getPluginId()
-    apply plugin: libs.plugins.architectury.loom.get().getPluginId()
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
 
     base {
-        archivesName = rootProject.mod_name
+        archivesName = project.mod_name
     }
 
     repositories {
@@ -45,16 +46,17 @@ subprojects {
         }
     }
 
-    loom {
-        silentMojangMappingsLicense()
-    }
+    // Disabled due to causing issues in multiproject setup
+    // loom {
+    //     silentMojangMappingsLicense()
+    // }
 
     dependencies {
-        minecraft libs.minecraft
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
         mappings loom.officialMojangMappings()
 
-        compileOnly libs.jetbrains.annotations
-        implementation libs.findbugs
+        compileOnly "org.jetbrains:annotations:24.0.1"
+        implementation "com.google.code.findbugs:jsr305:3.0.1"
     }
 
     java {
@@ -81,14 +83,14 @@ subprojects {
             attributes([
                     'Specification-Title'     : mod_name,
                     'Specification-Vendor'    : mod_author,
-                    'Specification-Version'   : rootProject.version,
+                    'Specification-Version'   : project.version,
                     'Implementation-Title'    : mod_name,
-                    'Implementation-Version'  : rootProject.version,
+                    'Implementation-Version'  : project.version,
                     'Implementation-Vendor'   : mod_author,
                     'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
                     'Timestamp'               : System.currentTimeMillis(),
                     'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-                    'Built-On-Minecraft'      : libs.versions.minecraft.get()
+                    'Built-On-Minecraft'      : rootProject.minecraft_version
             ])
         }
     }

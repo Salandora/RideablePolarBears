@@ -1,18 +1,14 @@
-apply plugin: libs.plugins.shadow.get().getPluginId()
-apply plugin: libs.plugins.minotaur.get().getPluginId()
-apply plugin: libs.plugins.cursegradle.get().getPluginId()
+plugins {
+    id "com.gradleup.shadow"
+
+    id "com.modrinth.minotaur"
+    id "com.matthewprenger.cursegradle"
+}
+
 
 architectury {
     platformSetupLoomIde()
     fabric()
-}
-
-loom {
-    runtimeOnlyLog4j = true
-
-    if (project(":common").loom.accessWidenerPath.getOrNull() != null && project(":common").loom.accessWidenerPath.asFile.get().exists()) {
-        accessWidenerPath.set(project(":common").loom.accessWidenerPath)
-    }
 }
 
 configurations {
@@ -33,14 +29,17 @@ configurations {
 }
 
 dependencies {
-    modImplementation libs.fabric.loader
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api}"
+
 
     // Development QoL
-    modLocalRuntime libs.modmenu
+    modLocalRuntime "com.terraformersmc:modmenu:${rootProject.modmenu}"
 
     // Dependencies
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowBundle(project(path: ":common", configuration: "transformProductionFabric"))
+    def path = "${project.parent.path}:common" // Get the correct path, even if we are in a multiproject setup
+    common(project(path: path, configuration: "namedElements")) { transitive false }
+    shadowBundle(project(path: path, configuration: "transformProductionFabric"))
 }
 
 processResources {
@@ -70,8 +69,8 @@ modrinth {
     versionName = "${mod_name}-${version}"
     versionType = 'release'
     file = remapJar.archiveFile
-    changelog = rootProject.file('CHANGELOG.md').text
-    gameVersions = [libs.versions.minecraft.get()]
+    changelog = project.file('../CHANGELOG.md').text
+    gameVersions = [project.minecraft_version]
     loaders = ['fabric']
     detectLoaders = false
 
@@ -97,9 +96,9 @@ curseforge {
         id = '932424'
         releaseType = 'release'
         changelogType = 'markdown'
-        changelog = rootProject.file('CHANGELOG.md')
+        changelog = project.file('../CHANGELOG.md')
 
-        addGameVersion libs.versions.minecraft.get()
+        addGameVersion project.minecraft_version
         addGameVersion 'Fabric'
 
         mainArtifact(remapJar) {

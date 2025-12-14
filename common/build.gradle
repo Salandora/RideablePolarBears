@@ -1,30 +1,9 @@
 architectury {
-    injectInjectables = false
     common(rootProject.enabled_platforms.split(","))
-}
-
-loom {
-    if(file("src/main/resources/${mod_id}.accesswidener").exists()) {
-        accessWidenerPath.set(file("src/main/resources/${mod_id}.accesswidener"))
-    }
 }
 
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
     // Do NOT use other classes from fabric loader
-    modImplementation libs.fabric.loader
-}
-
-publishing {
-    publications {
-        mavenCommon(MavenPublication) {
-            artifactId = base.archivesName.get()
-            from components.java
-        }
-    }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-    }
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader}"
 }

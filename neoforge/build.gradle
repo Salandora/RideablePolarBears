@@ -1,6 +1,9 @@
-apply plugin: libs.plugins.shadow.get().getPluginId()
-apply plugin: libs.plugins.minotaur.get().getPluginId()
-apply plugin: libs.plugins.cursegradle.get().getPluginId()
+plugins {
+    id "com.gradleup.shadow"
+
+    id "com.modrinth.minotaur"
+    id "com.matthewprenger.cursegradle"
+}
 
 architectury {
     injectInjectables = false
@@ -9,20 +12,8 @@ architectury {
 }
 
 loom {
-    runtimeOnlyLog4j = true
-
-    if (project(":common").loom.accessWidenerPath.getOrNull() != null && project(":common").loom.accessWidenerPath.asFile.get().exists()) {
-        accessWidenerPath.set(project(":common").loom.accessWidenerPath)
-    }
-
     forge {
-        convertAccessWideners = true
-        if (accessWidenerPath.getOrNull() != null && accessWidenerPath.asFile.get().exists()) {
-            extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
-        }
-
         mixinConfig "${mod_id}.common.mixins.json"
-        // mixinConfig "${mod_id}.mixins.json"
     }
 }
 
@@ -51,10 +42,12 @@ repositories {
 }
 
 dependencies {
-    forge libs.neoforge
+    forge "net.neoforged:forge:${rootProject.neoforge}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowBundle(project(path: ":common", configuration: "transformProductionForge"))
+    // Dependencies
+    def path = "${project.parent.path}:common" // Get the correct path, even if we are in a multiproject setup
+    common(project(path: path, configuration: "namedElements")) { transitive false }
+    shadowBundle(project(path: path, configuration: "transformProductionForge"))
 }
 
 processResources {
@@ -74,24 +67,6 @@ remapJar {
     inputFile.set shadowJar.archiveFile
 }
 
-publishing {
-    publications {
-        mavenFabric(MavenPublication) {
-            artifactId = base.archivesName.get()
-            version = project.version
-            artifact(remapJar) {
-                builtBy remapJar
-                classifier ''
-            }
-        }
-    }
-
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-    }
-}
-
 modrinth {
     debugMode = providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null
 
@@ -102,8 +77,8 @@ modrinth {
     versionName = "${mod_name}-${version}"
     versionType = 'release'
     file = remapJar.archiveFile
-    changelog = rootProject.file('CHANGELOG.md').text
-    gameVersions = [libs.versions.minecraft.get()]
+    changelog = project.file('../CHANGELOG.md').text
+    gameVersions = [project.minecraft_version]
     loaders = ['neoforge']
     detectLoaders = false
 
@@ -129,9 +104,9 @@ curseforge {
         id = '932424'
         releaseType = 'release'
         changelogType = 'markdown'
-        changelog = rootProject.file('CHANGELOG.md')
+        changelog = project.file('../CHANGELOG.md')
 
-        addGameVersion libs.versions.minecraft.get()
+        addGameVersion project.minecraft_version
         addGameVersion 'NeoForge'
 
         mainArtifact(remapJar) {
