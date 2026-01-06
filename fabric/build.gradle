@@ -38,7 +38,7 @@ dependencies {
 
     // Dependencies
     def path = "${project.parent.path}:common" // Get the correct path, even if we are in a multiproject setup
-    common(project(path: path, configuration: "namedElements")) { transitive false }
+    common(project(path: path, configuration: "namedElements")) { transitive = false }
     shadowBundle(project(path: path, configuration: "transformProductionFabric"))
 }
 
