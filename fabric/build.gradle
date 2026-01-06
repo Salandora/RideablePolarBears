@@ -34,7 +34,7 @@ dependencies {
 
 
     // Development QoL
-    modLocalRuntime "com.terraformersmc:modmenu:${rootProject.modmenu}"
+    // modLocalRuntime "com.terraformersmc:modmenu:${rootProject.modmenu}"
 
     // Dependencies
     def path = "${project.parent.path}:common" // Get the correct path, even if we are in a multiproject setup
