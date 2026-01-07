@@ -108,6 +108,6 @@ jobs:
           bodyFile: CHANGELOG.md
           draft: false
           prerelease: false
-          artifacts: "fabric/build/libs/${{ env.mod_name }}-${{ env.mod_version }}-${{ env.minecraft_version }}-fabric.jar,
-            forge/build/libs/${{ env.mod_name }}-${{ env.mod_version }}-${{ env.minecraft_version }}-forge.jar,
-            neoforged/build/libs/${{ env.mod_name }}-${{ env.mod_version }}-${{ env.minecraft_version }}-neoforged.jar"
+          artifacts: "fabric/build/libs/${{ env.mod_name }}-${{ env.mod_version }}+${{ env.minecraft_version }}-fabric.jar,
+            forge/build/libs/${{ env.mod_name }}-${{ env.mod_version }}+${{ env.minecraft_version }}-forge.jar,
+            neoforged/build/libs/${{ env.mod_name }}-${{ env.mod_version }}+${{ env.minecraft_version }}-neoforged.jar"
