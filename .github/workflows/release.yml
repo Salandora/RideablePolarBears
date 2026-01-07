@@ -51,14 +51,14 @@ jobs:
           set -e
 
           PREV_TAG=$(gh release list --limit 50 --json tagName \
-            --jq ".[] | select(.tagName | endswith(\"-${env.minecraft_version}\")) | .tagName" \
+            --jq ".[] | select(.tagName | endswith(\"-${minecraft_version}\")) | .tagName" \
             | head -n 1 || true)
 
           if [ -z "$PREV_TAG" ]; then
             {
               echo "# Changelog"
               echo
-              echo "- Updated to Minecraft ${env.minecraft_version}"
+              echo "- Updated to Minecraft ${minecraft_version}"
             } > CHANGELOG.md
             exit 0
           fi
