@@ -108,5 +108,5 @@ jobs:
           bodyFile: CHANGELOG.md
           draft: false
           prerelease: false
-          artifacts: "fabric/build/libs/${{ env.mod_name }}-${{ env.mod_version }}-${{ env.minecraft_version }}-fabric.jar,
-            neoforge/build/libs/${{ env.mod_name }}-${{ env.mod_version }}-${{ env.minecraft_version }}-neoforge.jar"
+          artifacts: "fabric/build/libs/${{ env.mod_name }}-${{ env.mod_version }}+${{ env.minecraft_version }}-fabric.jar,
+            neoforge/build/libs/${{ env.mod_name }}-${{ env.mod_version }}+${{ env.minecraft_version }}-neoforge.jar"
